@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>Sen uchun</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Press+Start+2P&family=Cinzel:wght@500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#07050b;--gold:#e9b872;--pink:#ff6fa5;--ink:#f6e7d3;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
+body{font-family:'Cinzel',Georgia,serif;color:var(--ink);-webkit-tap-highlight-color:transparent}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.ui{position:fixed;left:0;right:0;text-align:center;padding:0 16px;transition:opacity .9s ease;pointer-events:none}
+.ui.hide{opacity:0}
+#intro{top:70%}
+#intro p{margin:0 0 18px;font-size:clamp(10px,2.6vw,13px);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
+button{font:inherit;pointer-events:auto;cursor:pointer;background:rgba(233,184,114,.06);color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:12px 26px;font-size:clamp(10px,2.6vw,12px);letter-spacing:.24em;text-transform:uppercase;transition:background .3s,transform .2s,box-shadow .3s}
+button:hover{background:rgba(233,184,114,.18);box-shadow:0 0 22px rgba(233,184,114,.35)}
+button:active{transform:scale(.96)}
+#final{top:84%;padding-bottom:env(safe-area-inset-bottom,0px)}
+#final p{margin:0 0 16px;font-size:clamp(11px,2.8vw,14px);letter-spacing:.3em;text-transform:uppercase;color:#ffc3d8}
+#final button{border-color:rgba(255,111,165,.6);color:#ffc3d8;background:rgba(255,111,165,.05)}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div class="ui" id="intro">
+  <p id="caption"></p>
+  <button id="open"></button>
+</div>
+<div class="ui hide" id="final">
+  <p id="msg"></p>
+  <button id="again">Qayta ko’rish</button>
+</div>
+
+<script>
+/* ====== SHU YERDA O’ZGARTIRING ====== */
+const NAME    = 'Xadicha';                 // ism
+const CAPTION = NAME + ', senga xat keldi'; // konvert ostidagi yozuv
+const BTN     = 'Konvertni ochish';         // tugma
+const MESSAGE = 'Bu gul faqat sen uchun';   // gul ostidagi kichik yozuv
+/* ==================================== */
+
+document.getElementById('caption').textContent = CAPTION;
+document.getElementById('open').textContent = BTN;
+document.getElementById('msg').textContent = MESSAGE;
+
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const intro = document.getElementById('intro'), fin = document.getElementById('final');
+let W, H, DPR, N, P = [], stars = [], T = {}, phase = 'env', t0 = 0, vt = 0, timers = [];
+
+/* --- nishon nuqtalarni tasvirdan olish --- */
+function sample(draw, n){
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d', {willReadFrequently:true}); draw(x);
+  const d = x.getImageData(0, 0, W, H).data, idx = [];
+  for(let i = 3; i < d.length; i += 4) if(d[i] > 16) idx.push(i - 3);
+  const out = []; if(!idx.length) return out;
+  let tries = 0;
+  while(out.length < n && tries < n * 25){
+    tries++;
+    const k = idx[(Math.random() * idx.length) | 0];
+    if(Math.random() > d[k + 3] / 255) continue;
+    const q = k / 4;
+    out.push([q % W + Math.random() - .5, ((q / W) | 0) + Math.random() - .5, d[k], d[k+1], d[k+2]]);
+  }
+  while(out.length < n) out.push(out[(Math.random() * out.length) | 0]);
+  return out;
+}
+
+function fitFont(x, text, family, maxW){
+  x.font = '100px ' + family;
+  const w = x.measureText(text).width || 1;
+  return Math.max(12, 100 * maxW / w);
+}
+
+/* --- konvert --- */
+function buildEnvelope(){
+  const ew = Math.min(W * .72, 440), eh = ew * .62, cx = W / 2, cy = H * .38;
+  const l = cx - ew / 2, r = cx + ew / 2, t = cy - eh / 2, b = cy + eh / 2;
+  const tipY = cy + eh * .02;
+  const lines = x => {
+    x.strokeStyle = '#f2b866'; x.lineWidth = 3; x.lineJoin = 'round';
+    x.strokeRect(l, t, ew, eh);
+    x.beginPath(); x.moveTo(l, t); x.lineTo(cx, tipY); x.lineTo(r, t); x.stroke();
+    x.beginPath(); x.moveTo(l, b); x.lineTo(l + ew * .38, cy + eh * .1); x.moveTo(r, b); x.lineTo(r - ew * .38, cy + eh * .1); x.stroke();
+  };
+  const heart = x => {
+    const s = ew * .05, hx = cx, hy = tipY - s * .2;
+    x.fillStyle = '#ff7fb2'; x.beginPath();
+    x.moveTo(hx, hy + s * 1.2);
+    x.bezierCurveTo(hx - s * 2, hy - s * .2, hx - s * .8, hy - s * 1.6, hx, hy - s * .5);
+    x.bezierCurveTo(hx + s * .8, hy - s * 1.6, hx + s * 2, hy - s * .2, hx, hy + s * 1.2);
+    x.fill();
+  };
+  const text = x => {
+    const fam = "'Press Start 2P', monospace";
+    const fs = fitFont(x, 'FOR YOU', fam, ew * .56);
+    x.font = fs + 'px ' + fam; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillStyle = '#fff6e6'; x.fillText('FOR YOU', cx, cy + eh * .25);
+  };
+  return [...sample(lines, N * .5), ...sample(text, N * .34), ...sample(heart, N * .16)];
+}
+
+/* --- ism (katta) --- */
+function buildName(){
+  return sample(x => {
+    const fam = "'Great Vibes', cursive", fs = fitFont(x, NAME, fam, Math.min(W * .82, 680));
+    x.font = fs + 'px ' + fam; x.textAlign = 'center'; x.textBaseline = 'middle';
+    const g = x.createLinearGradient(W * .2, 0, W * .8, 0);
+    g.addColorStop(0, '#ffb3cf'); g.addColorStop(.5, '#fff0f5'); g.addColorStop(1, '#ff8fb8');
+    x.fillStyle = g; x.fillText(NAME, W / 2, H * .42);
+  }, N);
+}
+
+/* --- atirgul + ism --- */
+function buildRose(){
+  const cx = W / 2, cy = H * .33, R0 = Math.min(W * .21, H * .15), stemEnd = H * .64;
+  const head = x => {
+    for(let l = 0; l < 6; l++){
+      const R = R0 * (1 - l * .15), n = l % 2 ? 4 : 5, off = l * .9;
+      for(let p = 0; p < n; p++){
+        const a = p * Math.PI * 2 / n + off;
+        x.save(); x.translate(cx + Math.cos(a) * R * .38, cy + Math.sin(a) * R * .34); x.rotate(a);
+        x.beginPath(); x.ellipse(0, 0, R * .62, R * .5, 0, 0, Math.PI * 2);
+        x.fillStyle = `hsl(345 85% ${34 + l * 7}%)`; x.fill();
+        x.strokeStyle = `hsl(345 95% ${68 + l * 3}%)`; x.lineWidth = Math.max(2, R0 * .05); x.stroke();
+        x.restore();
+      }
+    }
+    x.beginPath();
+    for(let a = 0; a < Math.PI * 5; a += .15){
+      const rr = R0 * .16 * a / (Math.PI * 5);
+      const px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
+      a ? x.lineTo(px, py) : x.moveTo(px, py);
+    }
+    x.strokeStyle = '#ffd0e0'; x.lineWidth = 2; x.stroke();
+  };
+  const stem = x => {
+    const sw = Math.max(3, R0 * .1);
+    x.strokeStyle = '#2fd08a'; x.lineWidth = sw; x.lineCap = 'round';
+    x.beginPath(); x.moveTo(cx, cy + R0 * .7); x.quadraticCurveTo(cx - R0 * .35, (cy + stemEnd) / 2, cx, stemEnd); x.stroke();
+    const my = cy + (stemEnd - cy) * .55;
+    [[-1, '#1fae6a'], [1, '#34d99a']].forEach(([s, col], i) => {
+      x.save(); x.translate(cx + s * R0 * .35 - R0 * .1, my + i * R0 * .35); x.rotate(s * .75);
+      x.beginPath(); x.ellipse(0, 0, R0 * .5, R0 * .18, 0, 0, Math.PI * 2); x.fillStyle = col; x.fill(); x.restore();
+    });
+  };
+  const name = x => {
+    const fam = "'Great Vibes', cursive", fs = fitFont(x, NAME, fam, Math.min(W * .6, 380));
+    x.font = fs + 'px ' + fam; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillStyle = '#ffe3ee'; x.fillText(NAME, W / 2, H * .74);
+  };
+  return [...sample(head, N * .66), ...sample(stem, N * .15), ...sample(name, N * .19)];
+}
+
+/* --- zarralar --- */
+function assign(arr, burst){
+  for(let i = 0; i < N; i++){
+    const p = P[i], q = arr[i % arr.length];
+    p.tx = q[0]; p.ty = q[1]; p.cr = q[2]; p.cg = q[3]; p.cb = q[4];
+    if(burst){ const a = Math.random() * 6.283, s = Math.random() * 14 + 2; p.vx = Math.cos(a) * s; p.vy = Math.sin(a) * s; }
+  }
+}
+function initParticles(){
+  P = [];
+  for(let i = 0; i < N; i++){
+    const a = Math.random() * 6.283, s = Math.random() * 16 + 2;
+    P.push({x:W / 2, y:H * .4, vx:Math.cos(a) * s, vy:Math.sin(a) * s, tx:W / 2, ty:H / 2, r:255, g:230, b:200, cr:255, cg:230, cb:200,
+            ph:Math.random() * 6.283, va:Math.random() * 6.283, vr:.25 + Math.random() * .75, sz:1 + Math.random() * 1.1});
+  }
+}
+function buildAll(){
+  T.env = buildEnvelope(); T.name = buildName(); T.rose = buildRose();
+  const cur = phase === 'env' ? T.env : phase === 'name' ? T.name : phase === 'rose' ? T.rose : null;
+  if(cur) assign(cur, false);
+}
+
+function resize(){
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const n = W < 700 ? 4800 : 8000;
+  if(n !== N){ N = n; initParticles(); }
+  stars = Array.from({length:90}, () => ({x:Math.random() * W, y:Math.random() * H, r:Math.random() * 1.1 + .3, ph:Math.random() * 6.283}));
+  intro.style.top = Math.min(H * .38 + Math.min(W * .72, 440) * .31 + 28, H - 140) + 'px';
+  fin.style.top = (H * .74 + Math.min(W * .6, 380) * .14 + 20) + 'px';
+  buildAll();
+}
+
+/* --- animatsiya sikli --- */
+let last = performance.now();
+function frame(now){
+  const dt = Math.min((now - last) / 16.67, 3); last = now;
+  const time = now / 1000;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(7,5,11,.28)'; ctx.fillRect(0, 0, W, H);
+  ctx.globalCompositeOperation = 'lighter';
+  for(const s of stars){
+    ctx.fillStyle = `rgba(255,240,230,${.15 + .15 * Math.sin(time * 1.4 + s.ph)})`;
+    ctx.fillRect(s.x, s.y, s.r, s.r);
+  }
+  const vortex = phase === 'vortex';
+  if(vortex) vt += dt / 60;
+  const k = (vortex ? .09 : .055) * dt, damp = Math.pow(vortex ? .88 : .85, dt);
+  const rx = Math.min(W, H * 1.3) * .34, cxv = W / 2, cyv = H * .4;
+  for(let i = 0; i < N; i++){
+    const p = P[i];
+    let tx = p.tx, ty = p.ty;
+    if(vortex){
+      const a = p.va + vt * (2.2 + 3 / p.vr);
+      tx = cxv + Math.cos(a) * rx * p.vr; ty = cyv + Math.sin(a) * rx * p.vr * .36;
+      p.cr = 255; p.cg = 40 + (i % 60); p.cb = 90 + (i % 40);
+    } else {
+      tx += Math.sin(time * 1.6 + p.ph) * 1.1; ty += Math.cos(time * 1.3 + p.ph * 1.7) * 1.1;
+    }
+    p.vx = (p.vx + (tx - p.x) * k) * damp; p.vy = (p.vy + (ty - p.y) * k) * damp;
+    p.x += p.vx * dt; p.y += p.vy * dt;
+    p.r += (p.cr - p.r) * .07; p.g += (p.cg - p.g) * .07; p.b += (p.cb - p.b) * .07;
+    ctx.fillStyle = `rgb(${p.r | 0},${p.g | 0},${p.b | 0})`;
+    ctx.fillRect(p.x, p.y, p.sz, p.sz);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* --- ssenariy --- */
+function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
+document.getElementById('open').addEventListener('click', () => {
+  if(phase !== 'env') return;
+  phase = 'vortex'; vt = 0; intro.classList.add('hide');
+  later(() => { phase = 'name'; assign(T.name, false); }, 2400);
+  later(() => { phase = 'rose'; assign(T.rose, false); fin.classList.remove('hide'); }, 5400);
+});
+document.getElementById('again').addEventListener('click', () => {
+  timers.forEach(clearTimeout); timers = [];
+  fin.classList.add('hide'); phase = 'env'; assign(T.env, true);
+  later(() => intro.classList.remove('hide'), 700);
+});
+
+function start(){
+  resize(); phase = 'env'; assign(T.env, true);
+  addEventListener('resize', () => { clearTimeout(start.rt); start.rt = setTimeout(resize, 150); });
+  requestAnimationFrame(frame);
+}
+const fontsReady = Promise.all([
+  document.fonts.load("100px 'Great Vibes'", NAME),
+  document.fonts.load("20px 'Press Start 2P'", 'FOR YOU')
+]).catch(() => {});
+Promise.race([fontsReady, new Promise(r => setTimeout(r, 2000))]).then(start);
+</script>
+</body>
+</html>
