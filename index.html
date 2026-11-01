@@ -1,256 +1,96 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="uz">
 <head>
 <meta charset="utf-8">
-<title>Sen uchun</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Press+Start+2P&family=Cinzel:wght@500&display=swap" rel="stylesheet">
+<title>Sen uchun kichkina kviz 💌</title>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700&family=Pacifico&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#07050b;--gold:#e9b872;--pink:#ff6fa5;--ink:#f6e7d3;color-scheme:dark}
+:root{--bg1:#fff1ee;--bg2:#fdd5da;--ink:#3b2a30;--muted:#a8838c;--pink:#d6336c;--pink2:#e8527f;--card:#fff;--shadow:0 6px 18px rgba(214,51,108,.18);
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#2a1a20;--bg2:#3d2230;--ink:#fbe9ee;--muted:#c9a0ad;--card:#4a2a38;--shadow:0 6px 18px rgba(0,0,0,.4)}}
+:root[data-theme="dark"]{--bg1:#2a1a20;--bg2:#3d2230;--ink:#fbe9ee;--muted:#c9a0ad;--card:#4a2a38;--shadow:0 6px 18px rgba(0,0,0,.4)}
 *{box-sizing:border-box}
-html,body{margin:0;height:100%;background:var(--bg);overflow:hidden}
-body{font-family:'Cinzel',Georgia,serif;color:var(--ink);-webkit-tap-highlight-color:transparent}
-canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
-.ui{position:fixed;left:0;right:0;text-align:center;padding:0 16px;transition:opacity .9s ease;pointer-events:none}
-.ui.hide{opacity:0}
-#intro{top:70%}
-#intro p{margin:0 0 18px;font-size:clamp(10px,2.6vw,13px);letter-spacing:.28em;text-transform:uppercase;color:var(--gold)}
-button{font:inherit;pointer-events:auto;cursor:pointer;background:rgba(233,184,114,.06);color:var(--gold);border:1px solid var(--gold);border-radius:999px;padding:12px 26px;font-size:clamp(10px,2.6vw,12px);letter-spacing:.24em;text-transform:uppercase;transition:background .3s,transform .2s,box-shadow .3s}
-button:hover{background:rgba(233,184,114,.18);box-shadow:0 0 22px rgba(233,184,114,.35)}
-button:active{transform:scale(.96)}
-#final{top:84%;padding-bottom:env(safe-area-inset-bottom,0px)}
-#final p{margin:0 0 16px;font-size:clamp(11px,2.8vw,14px);letter-spacing:.3em;text-transform:uppercase;color:#ffc3d8}
-#final button{border-color:rgba(255,111,165,.6);color:#ffc3d8;background:rgba(255,111,165,.05)}
+html,body{height:100%;margin:0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{font-family:'Comfortaa',system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));display:flex;align-items:center;justify-content:center;overflow:hidden}
+#app{width:100%;max-width:420px;padding:24px;text-align:center;position:relative;z-index:2}
+.script{font-family:'Pacifico',cursive;color:var(--pink);font-size:1rem;margin:0 0 10px}
+h1{font-size:1.6rem;line-height:1.25;margin:0 0 14px}
+p.sub{color:var(--muted);font-size:.85rem;margin:0 0 24px}
+.opts{display:flex;flex-direction:column;gap:12px;margin-top:22px}
+button.opt{font:inherit;font-weight:700;font-size:.95rem;border:0;border-radius:14px;padding:15px 18px;background:var(--card);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;transition:transform .25s,opacity .4s}
+button.opt.main{background:linear-gradient(90deg,var(--pink),var(--pink2));color:#fff}
+button.opt:active{transform:scale(.97)}
+button.opt.gone{opacity:0;transform:translateY(14px) rotate(-4deg) scale(.9);pointer-events:none}
+.screen{animation:in .5s ease}
+@keyframes in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+#toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);background:#2d1b22;color:#fff;font-size:.8rem;font-weight:700;padding:9px 16px;border-radius:999px;opacity:0;transition:.3s;z-index:5;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+.ticket{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:18px 20px;text-align:left;margin:18px 0}
+.ticket .t{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--pink);border-bottom:1px dashed var(--muted);padding-bottom:12px;margin-bottom:12px}
+.ticket .t small{display:block;color:var(--muted);font-size:.6rem;letter-spacing:.08em}
+.row{display:flex;justify-content:space-between;font-size:.8rem;padding:5px 0}
+.row span:first-child{color:var(--muted);font-size:.65rem;letter-spacing:.1em;text-transform:uppercase}
+.row span:last-child{font-weight:700}
+.note{font-family:'Pacifico',cursive;color:var(--pink);font-size:.9rem;line-height:1.6;margin:0}
+a.again{color:var(--muted);font-size:.7rem;display:inline-block;margin-top:14px;cursor:pointer;text-decoration:underline}
+.heart{position:fixed;bottom:-30px;z-index:1;opacity:.5;animation:up linear forwards;pointer-events:none}
+@keyframes up{to{transform:translateY(-110vh) rotate(30deg);opacity:0}}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-
-<div class="ui" id="intro">
-  <p id="caption"></p>
-  <button id="open"></button>
-</div>
-<div class="ui hide" id="final">
-  <p id="msg"></p>
-  <button id="again">Qayta ko’rish</button>
-</div>
-
+<div id="app"></div>
+<div id="toast"></div>
 <script>
-/* ====== SHU YERDA O’ZGARTIRING ====== */
-const NAME    = 'Xadicha';                 // ism
-const CAPTION = NAME + ', senga xat keldi'; // konvert ostidagi yozuv
-const BTN     = 'Konvertni ochish';         // tugma
-const MESSAGE = 'Bu gul faqat sen uchun';   // gul ostidagi kichik yozuv
-/* ==================================== */
-
-document.getElementById('caption').textContent = CAPTION;
-document.getElementById('open').textContent = BTN;
-document.getElementById('msg').textContent = MESSAGE;
-
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
-const intro = document.getElementById('intro'), fin = document.getElementById('final');
-let W, H, DPR, N, P = [], stars = [], T = {}, phase = 'env', t0 = 0, vt = 0, timers = [];
-
-/* --- nishon nuqtalarni tasvirdan olish --- */
-function sample(draw, n){
-  const c = document.createElement('canvas'); c.width = W; c.height = H;
-  const x = c.getContext('2d', {willReadFrequently:true}); draw(x);
-  const d = x.getImageData(0, 0, W, H).data, idx = [];
-  for(let i = 3; i < d.length; i += 4) if(d[i] > 16) idx.push(i - 3);
-  const out = []; if(!idx.length) return out;
-  let tries = 0;
-  while(out.length < n && tries < n * 25){
-    tries++;
-    const k = idx[(Math.random() * idx.length) | 0];
-    if(Math.random() > d[k + 3] / 255) continue;
-    const q = k / 4;
-    out.push([q % W + Math.random() - .5, ((q / W) | 0) + Math.random() - .5, d[k], d[k+1], d[k+2]]);
-  }
-  while(out.length < n) out.push(out[(Math.random() * out.length) | 0]);
-  return out;
+// ====== SHU YERNI OʻZGARTIR ======
+var HER = "Sarvinoz", HIS = "Akmal";
+var DATE_TXT = "Chorshanba, 24-iyun", TIME_TXT = "23:00";
+// =================================
+var steps = [
+ {q:"Chorshanba kuni vaqting bormi?", o:[["Ha, albatta bor 💘",1],["Band boʻlishim mumkin 🤔",0,"Yoʻq-yoʻq 🙈"],["Hmm, bilmadim 😏",0,"Yoʻq-yoʻq 🙈"]]},
+ {q:"Birga qayerga boramiz?", key:"place", o:[["Magic City 🎡",1],["Yana ishga 💼",0,"Bugun boʻlmaydi 😤"],["Hech qayerga, dangasalik 🛌",0,"Bugun boʻlmaydi 😤"]]},
+ {q:"Nima koʻramiz?", key:"film", o:[["Qoʻrqinchli film 🎬",1],["Soliqlar haqida film 📊",0,"Yoʻq endi 😂"]]},
+ {q:"Shu oqshomni men bilan oʻtkazasanmi?", o:[["Ha, albatta ❤️",1],["Oʻylab koʻrishim kerak 🤨",0,"Hmm, notoʻgʻri javob 🙃"]]}
+];
+var i = -1, app = document.getElementById('app'), toast = document.getElementById('toast'), tt, picks = {};
+function say(t){toast.textContent=t;toast.classList.add('show');clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('show')},1400)}
+function heart(){var h=document.createElement('div');h.className='heart';h.textContent=['💗','💕','💖'][Math.random()*3|0];h.style.left=Math.random()*100+'vw';h.style.fontSize=(12+Math.random()*16)+'px';h.style.animationDuration=(6+Math.random()*6)+'s';document.body.appendChild(h);setTimeout(function(){h.remove()},12000)}
+setInterval(heart,900);
+function intro(){
+ i=-1;picks={};
+ app.innerHTML='<div class="screen"><p class="script">sen uchun, '+HER+' 💌</p><h1>Kichkina kviz —<br>katta sir bilan</h1><p class="sub">Bir nechta savolga javob ber — lekin ehtiyot boʻl, baʼzi tugmalar injiq 😉</p><div class="opts"><button class="opt main" id="go">Boshladik ✨</button></div></div>';
+ document.getElementById('go').onclick=next;
 }
-
-function fitFont(x, text, family, maxW){
-  x.font = '100px ' + family;
-  const w = x.measureText(text).width || 1;
-  return Math.max(12, 100 * maxW / w);
-}
-
-/* --- konvert --- */
-function buildEnvelope(){
-  const ew = Math.min(W * .72, 440), eh = ew * .62, cx = W / 2, cy = H * .38;
-  const l = cx - ew / 2, r = cx + ew / 2, t = cy - eh / 2, b = cy + eh / 2;
-  const tipY = cy + eh * .02;
-  const lines = x => {
-    x.strokeStyle = '#f2b866'; x.lineWidth = 3; x.lineJoin = 'round';
-    x.strokeRect(l, t, ew, eh);
-    x.beginPath(); x.moveTo(l, t); x.lineTo(cx, tipY); x.lineTo(r, t); x.stroke();
-    x.beginPath(); x.moveTo(l, b); x.lineTo(l + ew * .38, cy + eh * .1); x.moveTo(r, b); x.lineTo(r - ew * .38, cy + eh * .1); x.stroke();
+function next(){
+ i++;
+ if(i>=steps.length) return end();
+ var s=steps[i];
+ app.innerHTML='<div class="screen"><h1>'+s.q+'</h1><div class="opts" id="opts"></div></div>';
+ var box=document.getElementById('opts');
+ s.o.forEach(function(o){
+  var b=document.createElement('button');b.className='opt'+(o[1]?' main':'');b.textContent=o[0];
+  b.onclick=function(){
+   if(o[1]){if(s.key)picks[s.key]=o[0].replace(/ \S+$/,'');say('Ajoyib tanlov 💖');setTimeout(next,450)}
+   else{say(o[2]);b.classList.add('gone');setTimeout(function(){b.style.display='none'},450)}
   };
-  const heart = x => {
-    const s = ew * .05, hx = cx, hy = tipY - s * .2;
-    x.fillStyle = '#ff7fb2'; x.beginPath();
-    x.moveTo(hx, hy + s * 1.2);
-    x.bezierCurveTo(hx - s * 2, hy - s * .2, hx - s * .8, hy - s * 1.6, hx, hy - s * .5);
-    x.bezierCurveTo(hx + s * .8, hy - s * 1.6, hx + s * 2, hy - s * .2, hx, hy + s * 1.2);
-    x.fill();
-  };
-  const text = x => {
-    const fam = "'Press Start 2P', monospace";
-    const fs = fitFont(x, 'FOR YOU', fam, ew * .56);
-    x.font = fs + 'px ' + fam; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillStyle = '#fff6e6'; x.fillText('FOR YOU', cx, cy + eh * .25);
-  };
-  return [...sample(lines, N * .5), ...sample(text, N * .34), ...sample(heart, N * .16)];
+  box.appendChild(b);
+ });
 }
-
-/* --- ism (katta) --- */
-function buildName(){
-  return sample(x => {
-    const fam = "'Great Vibes', cursive", fs = fitFont(x, NAME, fam, Math.min(W * .82, 680));
-    x.font = fs + 'px ' + fam; x.textAlign = 'center'; x.textBaseline = 'middle';
-    const g = x.createLinearGradient(W * .2, 0, W * .8, 0);
-    g.addColorStop(0, '#ffb3cf'); g.addColorStop(.5, '#fff0f5'); g.addColorStop(1, '#ff8fb8');
-    x.fillStyle = g; x.fillText(NAME, W / 2, H * .42);
-  }, N);
+function end(){
+ for(var k=0;k<25;k++)setTimeout(heart,k*60);
+ app.innerHTML='<div class="screen"><p class="script">toʻgʻri tanlading 💗</p><h1>Bu — uchrashuv!</h1>'+
+ '<div class="ticket"><div class="t">🎬<div>'+(picks.place||'Magic City')+'<small>IKKI KISHILIK CHIPTA</small></div></div>'+
+ '<div class="row"><span>Seans</span><span>'+(picks.film||'Qoʻrqinchli film')+'</span></div>'+
+ '<div class="row"><span>Qachon</span><span>'+DATE_TXT+'</span></div>'+
+ '<div class="row"><span>Vaqt</span><span>'+TIME_TXT+'</span></div>'+
+ '<div class="row"><span>Joy</span><span>yonimda ❤️</span></div></div>'+
+ '<p class="note">Chiroyli boʻlib tayyorlan,<br>qolganini oʻzim hal qilaman 💗</p>'+
+ '<p class="sub" style="margin-top:10px;font-style:italic">Seni taklif qilyapti — seviklisi '+HIS+'</p>'+
+ '<a class="again" id="again">yana bir bor oʻtish</a></div>';
+ document.getElementById('again').onclick=intro;
 }
-
-/* --- atirgul + ism --- */
-function buildRose(){
-  const cx = W / 2, cy = H * .33, R0 = Math.min(W * .21, H * .15), stemEnd = H * .64;
-  const head = x => {
-    for(let l = 0; l < 6; l++){
-      const R = R0 * (1 - l * .15), n = l % 2 ? 4 : 5, off = l * .9;
-      for(let p = 0; p < n; p++){
-        const a = p * Math.PI * 2 / n + off;
-        x.save(); x.translate(cx + Math.cos(a) * R * .38, cy + Math.sin(a) * R * .34); x.rotate(a);
-        x.beginPath(); x.ellipse(0, 0, R * .62, R * .5, 0, 0, Math.PI * 2);
-        x.fillStyle = `hsl(345 85% ${34 + l * 7}%)`; x.fill();
-        x.strokeStyle = `hsl(345 95% ${68 + l * 3}%)`; x.lineWidth = Math.max(2, R0 * .05); x.stroke();
-        x.restore();
-      }
-    }
-    x.beginPath();
-    for(let a = 0; a < Math.PI * 5; a += .15){
-      const rr = R0 * .16 * a / (Math.PI * 5);
-      const px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
-      a ? x.lineTo(px, py) : x.moveTo(px, py);
-    }
-    x.strokeStyle = '#ffd0e0'; x.lineWidth = 2; x.stroke();
-  };
-  const stem = x => {
-    const sw = Math.max(3, R0 * .1);
-    x.strokeStyle = '#2fd08a'; x.lineWidth = sw; x.lineCap = 'round';
-    x.beginPath(); x.moveTo(cx, cy + R0 * .7); x.quadraticCurveTo(cx - R0 * .35, (cy + stemEnd) / 2, cx, stemEnd); x.stroke();
-    const my = cy + (stemEnd - cy) * .55;
-    [[-1, '#1fae6a'], [1, '#34d99a']].forEach(([s, col], i) => {
-      x.save(); x.translate(cx + s * R0 * .35 - R0 * .1, my + i * R0 * .35); x.rotate(s * .75);
-      x.beginPath(); x.ellipse(0, 0, R0 * .5, R0 * .18, 0, 0, Math.PI * 2); x.fillStyle = col; x.fill(); x.restore();
-    });
-  };
-  const name = x => {
-    const fam = "'Great Vibes', cursive", fs = fitFont(x, NAME, fam, Math.min(W * .6, 380));
-    x.font = fs + 'px ' + fam; x.textAlign = 'center'; x.textBaseline = 'middle';
-    x.fillStyle = '#ffe3ee'; x.fillText(NAME, W / 2, H * .74);
-  };
-  return [...sample(head, N * .66), ...sample(stem, N * .15), ...sample(name, N * .19)];
-}
-
-/* --- zarralar --- */
-function assign(arr, burst){
-  for(let i = 0; i < N; i++){
-    const p = P[i], q = arr[i % arr.length];
-    p.tx = q[0]; p.ty = q[1]; p.cr = q[2]; p.cg = q[3]; p.cb = q[4];
-    if(burst){ const a = Math.random() * 6.283, s = Math.random() * 14 + 2; p.vx = Math.cos(a) * s; p.vy = Math.sin(a) * s; }
-  }
-}
-function initParticles(){
-  P = [];
-  for(let i = 0; i < N; i++){
-    const a = Math.random() * 6.283, s = Math.random() * 16 + 2;
-    P.push({x:W / 2, y:H * .4, vx:Math.cos(a) * s, vy:Math.sin(a) * s, tx:W / 2, ty:H / 2, r:255, g:230, b:200, cr:255, cg:230, cb:200,
-            ph:Math.random() * 6.283, va:Math.random() * 6.283, vr:.25 + Math.random() * .75, sz:1 + Math.random() * 1.1});
-  }
-}
-function buildAll(){
-  T.env = buildEnvelope(); T.name = buildName(); T.rose = buildRose();
-  const cur = phase === 'env' ? T.env : phase === 'name' ? T.name : phase === 'rose' ? T.rose : null;
-  if(cur) assign(cur, false);
-}
-
-function resize(){
-  DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = innerWidth; H = innerHeight;
-  cv.width = W * DPR; cv.height = H * DPR; ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const n = W < 700 ? 4800 : 8000;
-  if(n !== N){ N = n; initParticles(); }
-  stars = Array.from({length:90}, () => ({x:Math.random() * W, y:Math.random() * H, r:Math.random() * 1.1 + .3, ph:Math.random() * 6.283}));
-  intro.style.top = Math.min(H * .38 + Math.min(W * .72, 440) * .31 + 28, H - 140) + 'px';
-  fin.style.top = (H * .74 + Math.min(W * .6, 380) * .14 + 20) + 'px';
-  buildAll();
-}
-
-/* --- animatsiya sikli --- */
-let last = performance.now();
-function frame(now){
-  const dt = Math.min((now - last) / 16.67, 3); last = now;
-  const time = now / 1000;
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.fillStyle = 'rgba(7,5,11,.28)'; ctx.fillRect(0, 0, W, H);
-  ctx.globalCompositeOperation = 'lighter';
-  for(const s of stars){
-    ctx.fillStyle = `rgba(255,240,230,${.15 + .15 * Math.sin(time * 1.4 + s.ph)})`;
-    ctx.fillRect(s.x, s.y, s.r, s.r);
-  }
-  const vortex = phase === 'vortex';
-  if(vortex) vt += dt / 60;
-  const k = (vortex ? .09 : .055) * dt, damp = Math.pow(vortex ? .88 : .85, dt);
-  const rx = Math.min(W, H * 1.3) * .34, cxv = W / 2, cyv = H * .4;
-  for(let i = 0; i < N; i++){
-    const p = P[i];
-    let tx = p.tx, ty = p.ty;
-    if(vortex){
-      const a = p.va + vt * (2.2 + 3 / p.vr);
-      tx = cxv + Math.cos(a) * rx * p.vr; ty = cyv + Math.sin(a) * rx * p.vr * .36;
-      p.cr = 255; p.cg = 40 + (i % 60); p.cb = 90 + (i % 40);
-    } else {
-      tx += Math.sin(time * 1.6 + p.ph) * 1.1; ty += Math.cos(time * 1.3 + p.ph * 1.7) * 1.1;
-    }
-    p.vx = (p.vx + (tx - p.x) * k) * damp; p.vy = (p.vy + (ty - p.y) * k) * damp;
-    p.x += p.vx * dt; p.y += p.vy * dt;
-    p.r += (p.cr - p.r) * .07; p.g += (p.cg - p.g) * .07; p.b += (p.cb - p.b) * .07;
-    ctx.fillStyle = `rgb(${p.r | 0},${p.g | 0},${p.b | 0})`;
-    ctx.fillRect(p.x, p.y, p.sz, p.sz);
-  }
-  requestAnimationFrame(frame);
-}
-
-/* --- ssenariy --- */
-function later(fn, ms){ timers.push(setTimeout(fn, ms)); }
-document.getElementById('open').addEventListener('click', () => {
-  if(phase !== 'env') return;
-  phase = 'vortex'; vt = 0; intro.classList.add('hide');
-  later(() => { phase = 'name'; assign(T.name, false); }, 2400);
-  later(() => { phase = 'rose'; assign(T.rose, false); fin.classList.remove('hide'); }, 5400);
-});
-document.getElementById('again').addEventListener('click', () => {
-  timers.forEach(clearTimeout); timers = [];
-  fin.classList.add('hide'); phase = 'env'; assign(T.env, true);
-  later(() => intro.classList.remove('hide'), 700);
-});
-
-function start(){
-  resize(); phase = 'env'; assign(T.env, true);
-  addEventListener('resize', () => { clearTimeout(start.rt); start.rt = setTimeout(resize, 150); });
-  requestAnimationFrame(frame);
-}
-const fontsReady = Promise.all([
-  document.fonts.load("100px 'Great Vibes'", NAME),
-  document.fonts.load("20px 'Press Start 2P'", 'FOR YOU')
-]).catch(() => {});
-Promise.race([fontsReady, new Promise(r => setTimeout(r, 2000))]).then(start);
+intro();
 </script>
 </body>
 </html>
